@@ -1,0 +1,124 @@
+/* global.css */
+:root{
+  --blue-1: #0ea5e9; /* sky */
+  --blue-2: #1e3a8a; /* deep blue */
+  --white: #ffffff;
+  --glass-bg: rgba(255,255,255,0.12);
+  --card-bg: rgba(255,255,255,0.75);
+  --card-border: rgba(255,255,255,0.18);
+  --shadow: 0 8px 30px rgba(16,24,40,0.18);
+  --radius: 14px;
+  --accent: #06b6d4;
+  --muted: #475569;
+  --glass-blur: 10px;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* full-page gradient */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: linear-gradient(135deg, var(--blue-1) 0%, #60a5fa 35%, var(--white) 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* app wrapper that sits on background */
+.app-shell {
+  width: 100%;
+  max-width: 1200px;
+  margin: 48px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* header / hero card */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.8));
+  box-shadow: var(--shadow);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+/* title */
+.hero .title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.hero .subtitle {
+  color: var(--muted);
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+/* CTA button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  background: linear-gradient(90deg, var(--blue-1), var(--accent));
+  color: white;
+  box-shadow: 0 6px 20px rgba(14,165,233,0.18);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.btn:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(14,165,233,0.22); }
+
+/* cards grid */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-top: 6px;
+}
+.card {
+  padding: 18px;
+  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 6px 18px rgba(2,6,23,0.08);
+  backdrop-filter: blur(6px);
+}
+
+/* card heading */
+.card h3 { margin: 0 0 8px 0; font-size: 16px; color: #08203a; }
+.card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+/* subtle floating animation for hero */
+@keyframes floaty {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+.hero { animation: floaty 6s ease-in-out infinite; }
+
+/* small helper */
+.text-muted { color: var(--muted); font-size: 13px; }
+
+/* responsive tweaks */
+@media (max-width: 640px) {
+  .hero { flex-direction: column; align-items: flex-start; }
+  .app-shell { margin: 18px; }
+}

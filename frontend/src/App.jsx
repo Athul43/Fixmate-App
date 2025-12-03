@@ -1,9 +1,21 @@
+// frontend/src/App.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import AuthModal from "./components/AuthModal";
+import "./styles/global.css"; // keep the new global styles
+// If you still use App.css, you can also import it:
+// import "./App.css";
 
 const API_BASE = "http://127.0.0.1:5000/api";
 
 function App() {
+  // Auth
+  const [authUser, setAuthUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("authUser") || "null"); } catch { return null; }
+  });
+  const [showAuth, setShowAuth] = useState(false);
+
+  // App data
   const [brands, setBrands] = useState([]);
   const [appliances, setAppliances] = useState([]);
   const [issues, setIssues] = useState([]);
@@ -12,36 +24,70 @@ function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Load brands on mount
   useEffect(() => {
-    axios.get(`${API_BASE}/brands`).then(res => setBrands(res.data));
+    axios.get(`${API_BASE}/brands`)
+      .then(res => {
+        // console.log("Brands loaded:", res.data);
+        setBrands(res.data || []);
+      })
+      .catch(err => {
+        console.error("Error loading brands:", err);
+        setBrands([]);
+      });
   }, []);
 
+  // Auth helpers
+  const onAuthSuccess = (user) => {
+    setAuthUser(user);
+    try { localStorage.setItem("authUser", JSON.stringify(user)); } catch {}
+  };
+  const logout = () => {
+    setAuthUser(null);
+    try { localStorage.removeItem("authUser"); } catch {}
+  };
+
+  // Fetch appliances for brand
   const fetchAppliances = (brand) => {
     setSelected({ brand, appliance: "", issue: "" });
     setIssues([]);
     setSolution("");
-    axios.get(`${API_BASE}/appliances?brand=${brand}`).then(res => setAppliances(res.data));
+    if (!brand) {
+      setAppliances([]);
+      return;
+    }
+    axios.get(`${API_BASE}/appliances?brand=${encodeURIComponent(brand)}`)
+      .then(res => setAppliances(res.data || []))
+      .catch(() => setAppliances([]));
   };
 
+  // Fetch issues for appliance
   const fetchIssues = (appliance) => {
     setSelected(prev => ({ ...prev, appliance, issue: "" }));
     setSolution("");
-    axios.get(`${API_BASE}/issues?brand=${selected.brand}&appliance=${appliance}`)
-      .then(res => setIssues(res.data));
-  };
-
-  const getSolution = async () => {
-    if (!selected.brand || !selected.appliance || !selected.issue) {
-      setError("Please select all fields");
+    if (!appliance) {
+      setIssues([]);
       return;
     }
-    
+    axios.get(`${API_BASE}/issues?brand=${encodeURIComponent(selected.brand)}&appliance=${encodeURIComponent(appliance)}`)
+      .then(res => setIssues(res.data || []))
+      .catch(() => setIssues([]));
+  };
+
+  // Get solution
+  const getSolution = async () => {
+    if (!selected.brand || !selected.appliance || !selected.issue) {
+      setError("Please select brand, appliance and issue.");
+      return;
+    }
+
     setLoading(true);
     setError("");
-    
+    setSolution("");
+
     try {
       const response = await axios.post(`${API_BASE}/solution`, selected);
-      setSolution(response.data.solution);
+      setSolution(response.data.solution || "No solution returned.");
     } catch (err) {
       setError(err.response?.data?.error || "Failed to fetch solution");
       setSolution("");
@@ -51,57 +97,171 @@ function App() {
   };
 
   return (
-    <div style={{ padding: 30 }}>
-      <h1>FixMate Kerala</h1>
-      <label>Brand:</label>
-      <select onChange={e => fetchAppliances(e.target.value)} value={selected.brand}>
-        <option value="">Select</option>
-        {brands.map(b => <option key={b} value={b}>{b}</option>)}
-      </select>
-
-      <br /><br />
-
-      <label>Appliance:</label>
-      <select 
-        onChange={e => fetchIssues(e.target.value)} 
-        value={selected.appliance}
-        disabled={!selected.brand}
-      >
-        <option value="">Select</option>
-        {appliances.map(a => <option key={a} value={a}>{a}</option>)}
-      </select>
-
-      <br /><br />
-
-      <label>Issue:</label>
-      <select 
-        onChange={e => setSelected(prev => ({ ...prev, issue: e.target.value }))}
-        value={selected.issue}
-        disabled={!selected.appliance}
-      >
-        <option value="">Select</option>
-        {issues.map(i => <option key={i} value={i}>{i}</option>)}
-      </select>
-
-      <br /><br />
-
-      <button 
-        onClick={getSolution} 
-        disabled={!selected.brand || !selected.appliance || !selected.issue || loading}
-      >
-        {loading ? "Loading..." : "Find Solution"}
-      </button>
-
-      {error && (
-        <div style={{ color: 'red', marginTop: 10 }}>
-          {error}
+    <div className="app-shell">
+      <div className="hero">
+        <div>
+          <h1 className="title">FixMate — Book Skilled Help Fast</h1>
+          <p className="subtitle">Find technicians, schedule visits, and get step-by-step fixes for common issues.</p>
         </div>
-      )}
 
-      {solution && (
-        <div style={{ marginTop: 20 }}>
-          <b>Solution:</b> {solution}
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {!authUser ? (
+            <>
+              <button
+                className="btn"
+                onClick={() => setShowAuth(true)}
+              >
+                Get Started
+              </button>
+
+              <button
+                className="btn"
+                style={{ background: "transparent", color: "#0f172a", border: "1px solid rgba(0,0,0,0.08)" }}
+                onClick={() => window.open("http://127.0.0.1:5000/api/brands", "_blank")}
+              >
+                API Docs
+              </button>
+            </>
+          ) : (
+            <>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <div style={{
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  background: "rgba(255,255,255,0.92)",
+                  fontWeight: 600
+                }}>
+                  Hello, <span style={{ color: "#044863" }}>{authUser.name}</span>
+                </div>
+
+                <button
+                  className="btn"
+                  style={{ background: "transparent", color: "#0f172a", border: "1px solid rgba(0,0,0,0.08)" }}
+                  onClick={logout}
+                >
+                  Logout
+                </button>
+              </div>
+            </>
+          )}
         </div>
+      </div>
+
+      <div className="card" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
+        <div>
+          <h3>Select Device</h3>
+
+          <label className="text-muted" style={{ display: "block", marginTop: 8 }}>Brand</label>
+          <select
+            className="input"
+            onChange={e => fetchAppliances(e.target.value)}
+            value={selected.brand}
+          >
+            <option value="">Select brand</option>
+            {brands.map(b => <option key={b} value={b}>{b}</option>)}
+          </select>
+
+          <label className="text-muted" style={{ display: "block", marginTop: 12 }}>Appliance</label>
+          <select
+            className="input"
+            onChange={e => fetchIssues(e.target.value)}
+            value={selected.appliance}
+            disabled={!selected.brand}
+          >
+            <option value="">Select appliance</option>
+            {appliances.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+
+          <label className="text-muted" style={{ display: "block", marginTop: 12 }}>Issue</label>
+          <select
+            className="input"
+            onChange={e => setSelected(prev => ({ ...prev, issue: e.target.value }))}
+            value={selected.issue}
+            disabled={!selected.appliance}
+          >
+            <option value="">Select issue</option>
+            {issues.map(i => <option key={i} value={i}>{i}</option>)}
+          </select>
+
+          <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
+            <button
+              className="btn"
+              onClick={getSolution}
+              disabled={!selected.brand || !selected.appliance || !selected.issue || loading}
+            >
+              {loading ? "Loading..." : "Find Solution"}
+            </button>
+
+            <button
+              className="btn"
+              style={{ background: "transparent", color: "#0f172a", border: "1px solid rgba(0,0,0,0.08)" }}
+              onClick={() => {
+                setSelected({ brand: "", appliance: "", issue: "" });
+                setAppliances([]);
+                setIssues([]);
+                setSolution("");
+                setError("");
+              }}
+            >
+              Reset
+            </button>
+          </div>
+
+          {error && (
+            <div style={{ color: 'crimson', marginTop: 12 }}>
+              {error}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <h3>Solution Preview</h3>
+
+          <div className="card" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9))" }}>
+            {!solution && !loading && <p className="text-muted">Select options and click <b>Find Solution</b> to see the recommended fix.</p>}
+            {loading && <p className="text-muted">Fetching solution...</p>}
+            {solution && (
+              <>
+                <h4 style={{ marginTop: 0 }}>Solution</h4>
+                <p style={{ whiteSpace: "pre-wrap", color: "#0b2540" }}>{solution}</p>
+              </>
+            )}
+          </div>
+
+          <div style={{ marginTop: 16 }}>
+            <h4 style={{ margin: "8px 0" }}>Quick Tips</h4>
+            <ul className="text-muted" style={{ paddingLeft: 18 }}>
+              <li>Try restarting the appliance before booking a visit.</li>
+              <li>Keep a photo of the model/label when scheduling a technician.</li>
+              <li>Use the Reset button to start over.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* categories / services */}
+      <div className="cards" style={{ marginTop: 6 }}>
+        <div className="card">
+          <h3>Plumbing</h3>
+          <p className="text-muted">Fast, local plumbers available for repairs and installations.</p>
+        </div>
+        <div className="card">
+          <h3>Electrical</h3>
+          <p className="text-muted">Certified electricians for wiring, switches, and more.</p>
+        </div>
+        <div className="card">
+          <h3>AC Service</h3>
+          <p className="text-muted">Maintenance, gas top-up and full repairs.</p>
+        </div>
+      </div>
+
+      {/* Auth modal */}
+      {showAuth && (
+        <AuthModal
+          mode="login"
+          onClose={() => setShowAuth(false)}
+          onAuthSuccess={onAuthSuccess}
+        />
       )}
     </div>
   );
