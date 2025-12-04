@@ -1,20 +1,11 @@
 // frontend/src/App.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import AuthModal from "./components/AuthModal";
-import "./styles/global.css"; // keep the new global styles
-// If you still use App.css, you can also import it:
-// import "./App.css";
+import "./styles/global.css";
 
 const API_BASE = "http://127.0.0.1:5000/api";
 
 function App() {
-  // Auth
-  const [authUser, setAuthUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("authUser") || "null"); } catch { return null; }
-  });
-  const [showAuth, setShowAuth] = useState(false);
-
   // App data
   const [brands, setBrands] = useState([]);
   const [appliances, setAppliances] = useState([]);
@@ -36,16 +27,6 @@ function App() {
         setBrands([]);
       });
   }, []);
-
-  // Auth helpers
-  const onAuthSuccess = (user) => {
-    setAuthUser(user);
-    try { localStorage.setItem("authUser", JSON.stringify(user)); } catch {}
-  };
-  const logout = () => {
-    setAuthUser(null);
-    try { localStorage.removeItem("authUser"); } catch {}
-  };
 
   // Fetch appliances for brand
   const fetchAppliances = (brand) => {
@@ -104,46 +85,7 @@ function App() {
           <p className="subtitle">Find technicians, schedule visits, and get step-by-step fixes for common issues.</p>
         </div>
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          {!authUser ? (
-            <>
-              <button
-                className="btn"
-                onClick={() => setShowAuth(true)}
-              >
-                Get Started
-              </button>
-
-              <button
-                className="btn"
-                style={{ background: "transparent", color: "#0f172a", border: "1px solid rgba(0,0,0,0.08)" }}
-                onClick={() => window.open("http://127.0.0.1:5000/api/brands", "_blank")}
-              >
-                API Docs
-              </button>
-            </>
-          ) : (
-            <>
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <div style={{
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  background: "rgba(255,255,255,0.92)",
-                  fontWeight: 600
-                }}>
-                  Hello, <span style={{ color: "#044863" }}>{authUser.name}</span>
-                </div>
-
-                <button
-                  className="btn"
-                  style={{ background: "transparent", color: "#0f172a", border: "1px solid rgba(0,0,0,0.08)" }}
-                  onClick={logout}
-                >
-                  Logout
-                </button>
-              </div>
-            </>
-          )}
+        <div style={{ display: "flex", gap: 12 }}>
         </div>
       </div>
 
@@ -255,14 +197,6 @@ function App() {
         </div>
       </div>
 
-      {/* Auth modal */}
-      {showAuth && (
-        <AuthModal
-          mode="login"
-          onClose={() => setShowAuth(false)}
-          onAuthSuccess={onAuthSuccess}
-        />
-      )}
     </div>
   );
 }
