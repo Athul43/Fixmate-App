@@ -2,7 +2,8 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-const API_BASE = "http://127.0.0.1:5000/api";
+const API_BASE = "https://YOUR-RENDER-BACKEND-URL.onrender.com";
+
 
 export default function AuthModal({ mode: initialMode = "login", onClose, onAuthSuccess }) {
   const [mode, setMode] = useState(initialMode); // 'login' or 'signup'

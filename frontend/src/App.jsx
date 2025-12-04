@@ -3,7 +3,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./styles/global.css";
 
-const API_BASE = "http://127.0.0.1:5000/api";
+const API_BASE = "https://YOUR-RENDER-BACKEND-URL.onrender.com/api";
+
 
 function App() {
   // App data
